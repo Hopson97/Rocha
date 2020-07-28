@@ -1,9 +1,9 @@
-func2:
+func:
     push 4
     push 3
     ret
 test:
-    call func2
+    call func
     call add
     call print
     push 6

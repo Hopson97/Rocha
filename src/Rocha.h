@@ -35,13 +35,23 @@ namespace Rocha {
       private:
         void run();
 
+        // All function byte code implemented in Rocha files are stored in here
         std::vector<uint16_t> m_bytecode;
+
+        // Maps labels to the byte code location of Rocha-defined functions
         std::unordered_map<std::string, size_t> m_jumps;
+
+        // Maps strings to Cpp-defined functions 
+        // Accessed is via index
         std::vector<std::pair<std::string, RochaFunction>> m_calls;
 
+        // The Rocha stack
         std::stack<std::any> m_stack;
+
+        // Call stack for "returning" to a previous function
         std::stack<size_t> m_callStack;
 
+        // Pointer to the currently operated index in m_bytecode 
         size_t m_instructionPtr = 0;
     };
 } // namespace Rocha
