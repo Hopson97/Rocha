@@ -18,7 +18,7 @@ test:
     call print
     push 6
     push 6
-    call multiplyFromCPP
+    call multiplyTest
     call print
     ret
 ```
@@ -26,20 +26,17 @@ test:
 Then the function `test` can be ran using:
 
 ```cpp
-
-void multiplyFromCPP(Rocha::Machine* machine)
+int main() 
 {
-    float a = machine->getNumber();
-    float b = machine->getNumber();
-    machine->pushNumber(a * b);
-}
-
-int main() {
     // Createa a Rocha machine
     Rocha::Machine rocha;
 
     // Add a function
-    rocha.addFunction("multiplyFromCPP", multiplyFromCPP);
+    rocha.addFunction("multiplyTest", [](Rocha::Machine* machine){
+        float a = machine->getNumber();
+        float b = machine->getNumber();
+        machine->pushNumber(a * b);
+    });
 
     // Load up the script
     rocha.loadScript("test.roc");

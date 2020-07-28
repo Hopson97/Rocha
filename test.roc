@@ -12,4 +12,8 @@ test:
     call add
     call add
     call print
+    push 2
+    push 3
+    call multiplyTest
+    call print
     ret
