@@ -1,8 +1,62 @@
 # Rocha
 
-Aka Off-Brand Lua, an embeddable """"scripting"""" language.
+Aka Off-Brand Lua, an embeddable """scripting""" language.
 
-Made for a bit off fun...
+Made for a bit off fun.
+
+Example:
+
+If a file test.roc contains:
+```
+rochaFunctionExample:
+    push 4
+    push 3
+    ret
+test:
+    call rochaFunctionExample
+    call add
+    call print
+    push 6
+    push 6
+    call multiplyFromCPP
+    call print
+    ret
+```
+
+Then the function `test` can be ran using:
+
+```cpp
+
+void multiplyFromCPP(Rocha::Machine* machine)
+{
+    float a = machine->getNumber();
+    float b = machine->getNumber();
+    machine->pushNumber(a * b);
+}
+
+int main() {
+    // Createa a Rocha machine
+    Rocha::Machine rocha;
+
+    // Add a function
+    rocha.addFunction("multiplyFromCPP", multiplyFromCPP);
+
+    // Load up the script
+    rocha.loadScript("test.roc");
+
+    // Call the `test` function directly
+    rocha.runFunction("test");
+}
+```
+
+This will output 
+
+```
+7
+36
+```
+
+
 
 ## Building and Running
 
