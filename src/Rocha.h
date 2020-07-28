@@ -33,11 +33,14 @@ namespace Rocha {
         void runFunction(const std::string& name);
 
       private:
+        void run();
+
         std::vector<uint16_t> m_bytecode;
         std::unordered_map<std::string, size_t> m_jumps;
         std::vector<std::pair<std::string, RochaFunction>> m_calls;
 
         std::stack<std::any> m_stack;
+        std::stack<size_t> m_callStack;
 
         size_t m_instructionPtr = 0;
     };

@@ -33,21 +33,23 @@ namespace Rocha {
         return value;
     }
 
-    void Machine::runFunction(const std::string& name)
+    void Machine::run()
     {
-        m_instructionPtr = m_jumps.find(name)->second;
-        while (m_bytecode[m_instructionPtr] != (uint16_t)Instruction::Return) {
+        while (true) {
             switch ((Instruction)m_bytecode[m_instructionPtr++]) {
                 case Instruction::Push:
                     m_stack.emplace((float)m_bytecode[m_instructionPtr++]);
                     break;
+
                 case Instruction::Pop:
                     m_stack.pop();
                     break;
+
                 case Instruction::Call:
                     switch ((Instruction)m_bytecode[m_instructionPtr++]) {
                         case Instruction::Jump:
-                            // yeet
+                            m_callStack.push(m_instructionPtr + 1);
+                            m_instructionPtr = m_bytecode[m_instructionPtr++];
                             break;
 
                         case Instruction::Call:
@@ -60,11 +62,25 @@ namespace Rocha {
                     }
                     break;
 
+                case Instruction::Return:
+                    if (!m_callStack.empty()) {
+                        m_instructionPtr = m_callStack.top();
+                        m_callStack.pop();
+                        break;
+                    }
+                    return;
+
                 default:
                     std::printf("Run error, unknown instruction");
                     return;
             }
         }
+    }
+
+    void Machine::runFunction(const std::string& name)
+    {
+        m_instructionPtr = m_jumps.find(name)->second;
+        run();
     }
 
     void Machine::addFunction(const std::string& name, RochaFunction f)
