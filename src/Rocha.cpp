@@ -83,15 +83,8 @@ namespace Rocha {
 
     void Machine::run()
     {
-        std::cout << "Code dump: \n";
-        for (auto b : m_bytecode) {
-            std::cout << b << ' ';
-        }
-        std::cout << std::endl;
-
         while (true) {
             Instruction ins = (Instruction)m_bytecode[m_instructionPtr++];
-
             switch (ins) {
                 case Instruction::Push:
                     printout("PUSH");
@@ -120,6 +113,7 @@ namespace Rocha {
                             printout("METHOD");
                             auto object = m_bytecode[m_instructionPtr++];
                             pushObject(m_objectAlloc[object]);
+                            m_calls[m_bytecode[m_instructionPtr++]].second(this);
                             break;
                         }
 
@@ -132,12 +126,10 @@ namespace Rocha {
                 case Instruction::Make: {
                     printout("MAKE");
                     int sizeBefore = m_objectAlloc.size();
-                    auto location = m_bytecode[m_instructionPtr++];
-                    m_calls[location].second(this);
+                    m_calls[m_bytecode[m_instructionPtr++]].second(this);
                     int sizeAfter = m_objectAlloc.size();
                     if (sizeBefore == sizeAfter) {
-                        std::printf("Run error, make %d must construct an object.",
-                                    location);
+                        std::printf("Run error, make must construct an object! (call");
                         return;
                     }
                 } break;
@@ -156,7 +148,7 @@ namespace Rocha {
                     return;
             }
         }
-    } // namespace Rocha
+    }
 
     void Machine::runFunction(const std::string& name)
     {
