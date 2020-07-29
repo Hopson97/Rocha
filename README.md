@@ -4,26 +4,59 @@ Aka Off-Brand Lua, an embeddable """scripting""" language.
 
 Made for a bit off fun.
 
-Example:
+## The Language
 
-If a file test.roc contains:
+Rocha is a stack-based language.
+
+This means operations work by "pushing" onto the stack, and then calling functions to operate on them.
+
+Everything must be within a label
+
+For example, to add two numbers together and print them out:
+
 ```
-rochaFunctionExample:
-    push 4
-    push 3
-    ret
-test:
-    call rochaFunctionExample
-    call add
-    call print
-    push 6
-    push 6
-    call multiplyTest
-    call print
-    ret
+main:
+    push 4      ;   Push 4 onto the stack
+    push 5      ;   Push 5 onto the stack
+    call add    ;   Call global add function
+    call print  ;   Call global print function
 ```
 
-Then the function `test` can be ran using:
+It is also possible to create user-defined types using the C++ API (See the below section), and then call methods on them
+
+For example, if a "Adder" object were created that allows you to call "setA" and "setB" to set some number, and then call "add" on it:
+
+```
+main:
+    make Adder my_adder_object  ;   Creates an "Adder" object, called "my_adder_object"
+    push 10                     ;   Push 4 onto the stack
+    call my_adder_object setA   ;   Calls Adder::setA using 10
+    push 6                      ;   Push 5 onto the stack
+    call my_adder_object setA   ;   Calls Adder::setA using 6
+    call my_adder_object add    ;   Call Adder::add, pushing 10 + 6 onto the stack
+    call print                  ;   Call global print function
+```
+
+Jump-Labels can also be defined:
+
+```
+some_function:
+    push 5
+    push 6
+
+main:
+    call some_function
+    print
+```
+
+This example prints 11.
+
+
+## The API
+
+The API allows the creation of a Rocha Machine, which is able to load up scripts, have user-defined types added, and run Rocha functions.
+
+The basics:
 
 ```cpp
 int main() 
@@ -31,41 +64,122 @@ int main()
     // Createa a Rocha machine
     Rocha::Machine rocha;
 
-    // Add a function
-    rocha.addFunction("multiplyTest", [](Rocha::Machine* machine){
-        float a = machine->getNumber();
-        float b = machine->getNumber();
-        machine->pushNumber(a * b);
-    });
-
     // Load up the script
     rocha.loadScript("test.roc");
 
-    // Call the `test` function directly
-    rocha.runFunction("test");
+    // Call the `main` function, which is defined by "test.roc"
+    rocha.runFunction("main");
 }
 ```
 
-This will output 
+### Adding functions 
+
+All functions must take in a Rocha::Machine* as a parameter and return void.
+
+It is then possible to consume the stack and do operations.
 
 ```
-7
-36
+    void myAdder(Machine* machine)
+    {
+        float a = machine->getNumber();
+        float b = machine->getNumber();
+        machine->pushNumber(a + b);
+    }
 ```
 
+This uses `Rocha::Machine::getNumber()` to get  some numbers from the top of the stack, and then uses `Rocha::Machine::pushNumber(float)` to push a number back onto the stack.
 
-## Bytecode
+The function can then be added:
 
-Table of bytes codes and operands etc
+```cpp
+int main() 
+{
+    Rocha::Machine rocha;
+    rocha.addFunction("myAdder", myAdder);
+    rocha.runFunction("main");
+}
+```
 
-| Name | Opcode | Operands | Code              | What Does It Do                                                                                     |
-|------|--------|----------|-------------------|-----------------------------------------------------------------------------------------------------|
-| Push | 0      | n        | push 5            | Pushes "n" onto the stack                                                                           |
-| Pop  | 1      |          | pop               | Pops a value from the stack                                                                         |
-| Call | 2      | 2 I      | call func         | Calls a C++ Function with ID I                                                                      |
-| Call | 2      | 3 R      | call func         | Calls a Rocha function at location R (Sets ip to R)                                                 |
-| Call | 2      | 4 V I    | call              | Call a C++ function that is a method, with object ID V with C++ function ID I                       |
-| Make | 5      | I        | make type varname | Creates an object of type "type", creating variable varname, calling C++ function I to construct it |
+This can be called directly from .roc files:
+
+```
+main:
+    push 5
+    push 6
+    call myAdder
+    print
+```
+
+### Adding types
+
+It is possible to add user-defined types and operations to Rocha.
+
+For example, if the following is defined:
+
+```cpp
+struct Adder {
+    int a;
+    int b;
+};
+
+void Adder_makeAdder(Rocha::Machine* machine)
+{
+    // The "Constructor" must call Rocha::Machine::makeObject(...)
+    Adder* adder = (Adder*)machine->makeObject(sizeof(Adder));
+    adder->a = 0;
+    adder->b = 0;
+}
+
+void Adder_setA(Rocha::Machine* machine)
+{
+    // On calling a function, the correct object is pushed onto the stack, which can be recieved doing Rocha::Machine::getObject()
+    Adder* adder = (Adder*)machine->getObject();
+    adder->a = machine->getNumber();
+}
+
+void Adder_setB(Rocha::Machine* machine)
+{
+    Adder* adder = (Adder*)machine->getObject();
+    adder->b = machine->getNumber();
+}
+
+void Adder_add(Rocha::Machine* machine)
+{
+    Adder* adder = (Adder*)machine->getObject();
+    machine->pushNumber(adder->a + adder->b);
+}
+```
+
+These can be added to Rocha by using `Rocha::Machine::newType(string, constructor function, vector of functions)`
+
+```cpp
+int main() 
+{
+    Rocha::Machine rocha;
+
+    // Adds the Adder type, defining the constructor and list of functions
+    rocha.newType("Adder", Adder_makeAdder,
+                  {
+                      {"setA", Adder_setA},
+                      {"setB", Adder_setB},
+                      {"add", Adder_add},
+                  });
+    rocha.runFunction("main");
+}
+```
+
+And then the Adder object can be used from .roc files:
+
+```
+main:
+    make Adder my_adder_object  ;   Creates an "Adder" object, called "my_adder_object"
+    push 10                     ;   Push 4 onto the stack
+    call my_adder_object setA   ;   Calls Adder::setA using 10
+    push 6                      ;   Push 5 onto the stack
+    call my_adder_object setA   ;   Calls Adder::setA using 6
+    call my_adder_object add    ;   Call Adder::add, pushing 10 + 6 onto the stack
+    call print                  ;   Call global print function
+```
 
 
 ## Building and Running
