@@ -2,7 +2,7 @@
 #include "Builtin.h"
 #include <iostream>
 
-//#define ROCHA_DEBUG
+#define ROCHA_DEBUG
 #ifdef ROCHA_DEBUG
 void printout(const char* c)
 {
@@ -61,10 +61,37 @@ namespace Rocha {
         }
     }
 
+    int Machine::findConstructorLocation(const std::string& name) const
+    {
+        auto itr = m_constructors.find(name);
+        if (itr != m_constructors.end()) {
+            return itr->second;
+        }
+        else {
+            return -1;
+        }
+    }
+
+    int Machine::findObjectMethod(const std::string& type, const std::string& name) const
+    {
+        auto func = m_objectFunctions.at(type).find(name);
+        if (func != m_objectFunctions.at(type).end()) {
+            return func->second;
+        }
+        return -1;
+    }
+
     void Machine::run()
     {
+        std::cout << "Code dump: \n";
+        for (auto b : m_bytecode) {
+            std::cout << b << ' ';
+        }
+        std::cout << std::endl;
+
         while (true) {
             Instruction ins = (Instruction)m_bytecode[m_instructionPtr++];
+
             switch (ins) {
                 case Instruction::Push:
                     printout("PUSH");
@@ -90,9 +117,9 @@ namespace Rocha {
                             break;
 
                         case Instruction::Method: {
+                            printout("METHOD");
                             auto object = m_bytecode[m_instructionPtr++];
                             pushObject(m_objectAlloc[object]);
-                            m_calls[m_bytecode[m_instructionPtr++]].second(this);
                             break;
                         }
 
@@ -105,10 +132,12 @@ namespace Rocha {
                 case Instruction::Make: {
                     printout("MAKE");
                     int sizeBefore = m_objectAlloc.size();
-                    m_calls[m_bytecode[m_instructionPtr++]].second(this);
+                    auto location = m_bytecode[m_instructionPtr++];
+                    m_calls[location].second(this);
                     int sizeAfter = m_objectAlloc.size();
                     if (sizeBefore == sizeAfter) {
-                        std::printf("Run error, make must construct an object! (call");
+                        std::printf("Run error, make %d must construct an object.",
+                                    location);
                         return;
                     }
                 } break;
@@ -127,7 +156,7 @@ namespace Rocha {
                     return;
             }
         }
-    }
+    } // namespace Rocha
 
     void Machine::runFunction(const std::string& name)
     {
@@ -146,6 +175,7 @@ namespace Rocha {
     {
         addFunction(name, onMake);
         m_constructors.emplace(name, m_calls.size() - 1);
+        std::cout << "Added constructor to location " << m_calls.size() - 1 << std::endl;
         std::unordered_map<std::string, size_t> methodMap;
         for (auto& method : methods) {
             int index = m_calls.size();
