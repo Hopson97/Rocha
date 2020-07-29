@@ -32,6 +32,7 @@ namespace Rocha {
     class Machine {
       public:
         Machine();
+        ~Machine();
         bool loadScript(const char* fileName);
 
         void pushNumber(float value);
