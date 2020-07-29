@@ -1,7 +1,7 @@
 #include "Rocha.h"
 #include "Builtin.h"
-#include <iostream>
 #include "RochaAssember.h"
+#include <iostream>
 
 //#define ROCHA_DEBUG
 #ifdef ROCHA_DEBUG
@@ -188,6 +188,5 @@ namespace Rocha {
     {
         return m_objectAlloc.emplace_back(std::calloc(0, size));
     }
-
 
 } // namespace Rocha

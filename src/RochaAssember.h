@@ -13,11 +13,9 @@ namespace Rocha {
 
       private:
         void addPush(const Tokens& tokens);
-        void addCall(const Tokens& tokens);
-        void addJump(const Tokens& tokens);
-        void addMethod(const Tokens& tokens);
-        void addMake(const Tokens& tokens);
-        void addReturn(const Tokens& tokens);
+        bool addJumpOrCall(const Tokens& tokens);
+        bool addMethodCall(const Tokens& tokens);
+        bool addMake(const Tokens& tokens);
 
         void addInstruction(const std::string& instruction);
         void addInstruction(Instruction instruction);

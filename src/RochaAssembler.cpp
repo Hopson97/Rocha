@@ -57,91 +57,33 @@ namespace Rocha {
             std::istringstream iss(line);
             std::vector<std::string> tokens(std::istream_iterator<std::string>{iss},
                                             std::istream_iterator<std::string>());
-            const std::string& ins = tokens[0];
-            if (ins == push) {
-                addInstruction(ins);
-                m_bytes.push_back(std::stoi(tokens[1]));
+            if (tokens[0] == push) {
+                addPush(tokens);
             }
-            else if (ins == call) {
+            else if (tokens[0] == call) {
                 bool found = false;
                 if (tokens.size() == 2) {
-                    for (uint16_t i = 0; i < m_calls.size(); i++) {
-                        if (m_calls[i].first == tokens[1]) {
-                            addInstruction(ins);
-                            m_bytes.push_back(static_cast<uint16_t>(Instruction::Call));
-                            m_bytes.push_back(i);
-                            found = true;
-                        }
-                    }
-                    if (!found) {
-                        auto itr = m_jumps.find(tokens[1]);
-                        if (itr != m_jumps.end()) {
-                            addInstruction(ins);
-                            m_bytes.push_back(static_cast<uint16_t>(Instruction::Jump));
-                            m_bytes.push_back(itr->second);
-                            found = true;
-                        }
-                    }
-                }
-                else {
-                    // Find the variable
-                    auto itr = m_objects.find(tokens[1]);
-                    if (itr != m_objects.end()) {
-                        auto type = m_objectTypes[itr->second];
-                        auto method = m_machine.findObjectMethod(type, tokens[2]);
-                        if (method > -1) {
-                            addInstruction(ins);
-                            addInstruction(Instruction::Method);
-                            m_bytes.push_back(itr->second);
-                            m_bytes.push_back(method);
-                            found = true;
-                        }
-                        else {
-                            std::printf("Type %s does not have function %s", type.c_str(),
-                                        tokens[2].c_str());
-                            return false;
-                        }
-                    }
-                    else {
-                        std::printf("Varname %s does not exist where %s",
-                                    tokens[1].c_str(), line.c_str());
-                        return false;
-                    }
-                }
-                if (!found) {
-                    std::printf("Unknown call to '%s' where '%s'", tokens[1].c_str(),
-                                line.c_str());
-                    return false;
-                }
-            }
-            else if (ins == make) {
-                auto constructor = m_machine.findConstructorLocation(tokens[1]);
-                if (constructor > -1) {
-                    addInstruction(ins);
-                    m_bytes.push_back(constructor);
-                    auto object = m_objects.find(tokens[2]);
-                    if (object == m_objects.end()) {
-                        m_objects.emplace(tokens[2], m_objects.size());
-                        m_objectTypes.emplace(m_objects.size() - 1, tokens[1]);
-                        std::cout << "Added make " << tokens[1] << " " << m_bytes.back()
-                                  << std::endl;
-                    }
-                    else {
-                        std::printf("Object with name %s already exists",
-                                    tokens[2].c_str());
+                    if (!addJumpOrCall(tokens)) {
                         return false;
                     }
                 }
                 else {
-                    std::printf("Unkown type %s", tokens[1].c_str());
+                    if (!addMethodCall(tokens)) {
+                        return false;
+                    }
+                }
+            }
+            else if (tokens[0] == make) {
+                if (!addMake(tokens)) {
                     return false;
                 }
             }
-            else if (ins.find(":") != std::string::npos) {
-                m_jumps.emplace(ins.substr(0, ins.size() - 1), m_bytes.size());
+            else if (tokens[0].find(":") != std::string::npos) {
+                m_jumps.emplace(tokens[0].substr(0, tokens[0].size() - 1),
+                                m_bytes.size());
             }
             else {
-                addInstruction(ins);
+                addInstruction(tokens[0]);
             }
         }
         return true;
@@ -149,26 +91,83 @@ namespace Rocha {
 
     void Assembler::addPush(const Tokens& tokens)
     {
+        addInstruction(tokens[0]);
+        m_bytes.push_back(std::stoi(tokens[1]));
     }
 
-    void Assembler::addCall(const Tokens& tokens)
+    bool Assembler::addJumpOrCall(const Tokens& tokens)
     {
+        // Try add a function call
+        // Produces "call call function_location"
+        for (uint16_t i = 0; i < m_calls.size(); i++) {
+            if (m_calls[i].first == tokens[1]) {
+                addInstruction(tokens[0]);
+                m_bytes.push_back(static_cast<uint16_t>(Instruction::Call));
+                m_bytes.push_back(i);
+                return true;
+            }
+        }
+
+        // Try add a "jump" call to a script-defined label
+        // Produces "call jump jump_location"
+        auto itr = m_jumps.find(tokens[1]);
+        if (itr != m_jumps.end()) {
+            addInstruction(tokens[0]);
+            m_bytes.push_back(static_cast<uint16_t>(Instruction::Jump));
+            m_bytes.push_back(itr->second);
+            return true;
+        }
+        return false;
     }
 
-    void Assembler::addJump(const Tokens& tokens)
+    // Produces "call method object_id function_location"
+    bool Assembler::addMethodCall(const Tokens& tokens)
     {
+        // Find the variable
+        auto object = m_objects.find(tokens[1]);
+        if (object != m_objects.end()) {
+            auto type = m_objectTypes[object->second];
+            auto methodLocation = m_machine.findObjectMethod(type, tokens[2]);
+            if (methodLocation > -1) {
+                addInstruction(tokens[0]);
+                addInstruction(Instruction::Method);
+                m_bytes.push_back(object->second);
+                m_bytes.push_back(methodLocation);
+                return true;
+            }
+            else {
+                std::printf("Type %s does not have function %s", type.c_str(),
+                            tokens[2].c_str());
+                return false;
+            }
+        }
+        std::printf("Varname %s does not exist.", tokens[1].c_str());
+        return false;
     }
 
-    void Assembler::addMethod(const Tokens& tokens)
+    // Produces "make type_id"
+    bool Assembler::addMake(const Tokens& tokens)
     {
-    }
-
-    void Assembler::addMake(const Tokens& tokens)
-    {
-    }
-
-    void Assembler::addReturn(const Tokens& tokens)
-    {
+        auto constructor = m_machine.findConstructorLocation(tokens[1]);
+        if (constructor > -1) {
+            addInstruction(tokens[0]);
+            m_bytes.push_back(constructor);
+            auto object = m_objects.find(tokens[2]);
+            if (object == m_objects.end()) {
+                // The bytecode of make does not need to know the object id being made
+                m_objects.emplace(tokens[2], m_objects.size());
+                m_objectTypes.emplace(m_objects.size() - 1, tokens[1]);
+                std::cout << "Added make " << tokens[1] << " " << m_bytes.back()
+                          << std::endl;
+                return true;
+            }
+            else {
+                std::printf("Object with name %s already exists", tokens[2].c_str());
+                return false;
+            }
+        }
+        std::printf("Unkown type %s", tokens[1].c_str());
+        return false;
     }
 
     void Assembler::addInstruction(const std::string& instruction)
