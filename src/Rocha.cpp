@@ -1,8 +1,9 @@
 #include "Rocha.h"
 #include "Builtin.h"
 #include <iostream>
+#include "RochaAssember.h"
 
-#define ROCHA_DEBUG
+//#define ROCHA_DEBUG
 #ifdef ROCHA_DEBUG
 void printout(const char* c)
 {
@@ -19,6 +20,12 @@ namespace Rocha {
     {
         addFunction("add", Rocha::add);
         addFunction("print", Rocha::print);
+    }
+
+    bool Machine::loadScript(const char* fileName)
+    {
+        Assembler asmler(*this, m_bytecode, m_jumps, m_calls);
+        return asmler.assemble(fileName);
     }
 
     void Machine::pushNumber(float value)
@@ -181,5 +188,6 @@ namespace Rocha {
     {
         return m_objectAlloc.emplace_back(std::calloc(0, size));
     }
+
 
 } // namespace Rocha
