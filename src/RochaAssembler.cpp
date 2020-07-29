@@ -57,7 +57,7 @@ namespace Rocha {
             if (line.find(';') != std::string::npos)
                 line = line.substr(0, line.find(';'));
 
-            if(line.empty()) {
+            if (line.empty()) {
                 continue;
             }
 
