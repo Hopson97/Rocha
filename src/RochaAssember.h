@@ -6,10 +6,10 @@ namespace Rocha {
     using Tokens = std::vector<std::string>;
     class Assembler {
       public:
-        Assembler(std::vector<uint16_t>& bytes,
+        Assembler(Machine& machine, std::vector<uint16_t>& bytes,
                   std::unordered_map<std::string, size_t>& jumps,
                   std::vector<std::pair<std::string, RochaFunction>>& calls);
-        bool assemble(const Machine& machine, const char* filename);
+        bool assemble(const char* filename);
 
       private:
         void addPush(const Tokens& tokens);
@@ -31,5 +31,7 @@ namespace Rocha {
         std::vector<uint16_t>& m_bytes;
         std::unordered_map<std::string, size_t>& m_jumps;
         std::vector<std::pair<std::string, RochaFunction>>& m_calls;
+
+        const Machine& m_machine;
     };
 } // namespace Rocha

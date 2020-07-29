@@ -34,16 +34,17 @@ const std::unordered_map<std::string, Rocha::Instruction> toInstruction = {
 
 namespace Rocha {
 
-    Assembler::Assembler(std::vector<uint16_t>& bytes,
+    Assembler::Assembler(Machine& machine, std::vector<uint16_t>& bytes,
                          std::unordered_map<std::string, size_t>& jumps,
                          std::vector<std::pair<std::string, RochaFunction>>& calls)
         : m_bytes(bytes)
         , m_jumps(jumps)
         , m_calls(calls)
+        , m_machine(machine)
     {
     }
 
-    bool Assembler::assemble(const Machine& machine, const char* filename)
+    bool Assembler::assemble(const char* filename)
     {
         std::ifstream infile(filename);
         if (!infile.is_open()) {
@@ -87,7 +88,7 @@ namespace Rocha {
                     auto itr = m_objects.find(tokens[1]);
                     if (itr != m_objects.end()) {
                         auto type = m_objectTypes[itr->second];
-                        auto method = machine.findObjectMethod(type, tokens[2]);
+                        auto method = m_machine.findObjectMethod(type, tokens[2]);
                         if (method > -1) {
                             addInstruction(ins);
                             addInstruction(Instruction::Method);
@@ -114,7 +115,7 @@ namespace Rocha {
                 }
             }
             else if (ins == make) {
-                auto constructor = machine.findConstructorLocation(tokens[1]);
+                auto constructor = m_machine.findConstructorLocation(tokens[1]);
                 if (constructor > -1) {
                     addInstruction(ins);
                     m_bytes.push_back(constructor);
@@ -178,11 +179,5 @@ namespace Rocha {
     void Assembler::addInstruction(Instruction instruction)
     {
         m_bytes.push_back(static_cast<uint16_t>(instruction));
-    }
-
-    bool Machine::loadScript(const char* fileName)
-    {
-        Assembler asmler(m_bytecode, m_jumps, m_calls);
-        return asmler.assemble(*this, fileName);
     }
 } // namespace Rocha
