@@ -210,3 +210,5 @@ You can also create a deployable build (that can be sent) by doing:
 ```sh
 sh scripts/deploy.sh
 ```
+
+wot++ or something idk 
