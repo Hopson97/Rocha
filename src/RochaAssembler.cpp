@@ -1,4 +1,4 @@
-#include "Rocha.h"
+#include "RochaAssember.h"
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -34,16 +34,21 @@ const std::unordered_map<std::string, Rocha::Instruction> toInstruction = {
 
 namespace Rocha {
 
-    bool Machine::loadScript(const char* fileName)
+    Assembler::Assembler(std::vector<uint16_t>& bytes,
+                         std::unordered_map<std::string, size_t>& jumps,
+                         std::vector<std::pair<std::string, RochaFunction>>& calls)
+        : m_bytes(bytes)
+        , m_jumps(jumps)
+        , m_calls(calls)
     {
-        std::ifstream infile(fileName);
+    }
+
+    bool Assembler::assemble(const Machine& machine, const char* filename)
+    {
+        std::ifstream infile(filename);
         if (!infile.is_open()) {
             return false;
         }
-
-        auto addInstruction = [&](const std::string& instruction) {
-            m_bytecode.push_back(static_cast<uint16_t>(toInstruction.at(instruction)));
-        };
 
         std::string line;
         while (std::getline(infile, line)) {
@@ -51,11 +56,10 @@ namespace Rocha {
             std::istringstream iss(line);
             std::vector<std::string> tokens(std::istream_iterator<std::string>{iss},
                                             std::istream_iterator<std::string>());
-
             const std::string& ins = tokens[0];
             if (ins == push) {
                 addInstruction(ins);
-                m_bytecode.push_back(std::stoi(tokens[1]));
+                m_bytes.push_back(std::stoi(tokens[1]));
             }
             else if (ins == call) {
                 bool found = false;
@@ -63,9 +67,8 @@ namespace Rocha {
                     for (uint16_t i = 0; i < m_calls.size(); i++) {
                         if (m_calls[i].first == tokens[1]) {
                             addInstruction(ins);
-                            m_bytecode.push_back(
-                                static_cast<uint16_t>(Instruction::Call));
-                            m_bytecode.push_back(i);
+                            m_bytes.push_back(static_cast<uint16_t>(Instruction::Call));
+                            m_bytes.push_back(i);
                             found = true;
                         }
                     }
@@ -73,37 +76,28 @@ namespace Rocha {
                         auto itr = m_jumps.find(tokens[1]);
                         if (itr != m_jumps.end()) {
                             addInstruction(ins);
-                            m_bytecode.push_back(
-                                static_cast<uint16_t>(Instruction::Jump));
-                            m_bytecode.push_back(itr->second);
+                            m_bytes.push_back(static_cast<uint16_t>(Instruction::Jump));
+                            m_bytes.push_back(itr->second);
                             found = true;
                         }
                     }
                 }
                 else {
-                    // Method call lol
-                    auto& var = tokens[1];
-                    auto& func = tokens[1];
-
                     // Find the variable
                     auto itr = m_objects.find(tokens[1]);
                     if (itr != m_objects.end()) {
                         auto type = m_objectTypes[itr->second];
-
-                        // Find the function
-                        auto func = m_objectFunctions[type].find(tokens[2]);
-                        if (func != m_objectFunctions[type].end()) {
-                            // Add the method call
+                        auto method = machine.findObjectMethod(type, tokens[2]);
+                        if (method > -1) {
                             addInstruction(ins);
-                            m_bytecode.push_back(
-                                static_cast<uint16_t>(Instruction::Method));
-                            m_bytecode.push_back(itr->second);
-                            m_bytecode.push_back(func->second);
+                            addInstruction(Instruction::Method);
+                            m_bytes.push_back(method);
                             found = true;
                         }
                         else {
                             std::printf("Type %s does not have function %s", type.c_str(),
                                         tokens[2].c_str());
+                            return false;
                         }
                     }
                     else {
@@ -119,14 +113,16 @@ namespace Rocha {
                 }
             }
             else if (ins == make) {
-                auto itr = m_constructors.find(tokens[1]);
-                if (itr != m_constructors.end()) {
+                auto constructor = machine.findConstructorLocation(tokens[1]);
+                if (constructor > -1) {
                     addInstruction(ins);
-                    m_bytecode.push_back(itr->second);
+                    m_bytes.push_back(constructor);
                     auto object = m_objects.find(tokens[2]);
                     if (object == m_objects.end()) {
                         m_objects.emplace(tokens[2], m_objects.size());
                         m_objectTypes.emplace(m_objects.size() - 1, tokens[1]);
+                        std::cout << "Added make " << tokens[1] << " " << m_bytes.back()
+                                  << std::endl;
                     }
                     else {
                         std::printf("Object with name %s already exists",
@@ -140,13 +136,52 @@ namespace Rocha {
                 }
             }
             else if (ins.find(":") != std::string::npos) {
-                m_jumps.emplace(ins.substr(0, ins.size() - 1), m_bytecode.size());
+                m_jumps.emplace(ins.substr(0, ins.size() - 1), m_bytes.size());
             }
             else {
                 addInstruction(ins);
             }
         }
-
         return true;
+    }
+
+    void Assembler::addPush(const Tokens& tokens)
+    {
+    }
+
+    void Assembler::addCall(const Tokens& tokens)
+    {
+    }
+
+    void Assembler::addJump(const Tokens& tokens)
+    {
+    }
+
+    void Assembler::addMethod(const Tokens& tokens)
+    {
+    }
+
+    void Assembler::addMake(const Tokens& tokens)
+    {
+    }
+
+    void Assembler::addReturn(const Tokens& tokens)
+    {
+    }
+
+    void Assembler::addInstruction(const std::string& instruction)
+    {
+        m_bytes.push_back(static_cast<uint16_t>(toInstruction.at(instruction)));
+    }
+
+    void Assembler::addInstruction(Instruction instruction)
+    {
+        m_bytes.push_back(static_cast<uint16_t>(instruction));
+    }
+
+    bool Machine::loadScript(const char* fileName)
+    {
+        Assembler asmler(m_bytecode, m_jumps, m_calls);
+        return asmler.assemble(*this, fileName);
     }
 } // namespace Rocha

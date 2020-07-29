@@ -49,6 +49,9 @@ namespace Rocha {
 
         void* makeObject(size_t size);
 
+        int findConstructorLocation(const std::string& name) const;
+        int findObjectMethod(const std::string& type, const std::string& name) const;
+
       private:
         void run();
 
@@ -66,12 +69,6 @@ namespace Rocha {
         std::unordered_map<std::string, size_t> m_constructors;
         std::unordered_map<std::string, std::unordered_map<std::string, size_t>>
             m_objectFunctions;
-
-        // Maps variables to an ID
-        std::unordered_map<std::string, uint16_t> m_objects;
-
-        // Maps variables to a type names
-        std::unordered_map<uint16_t, std::string> m_objectTypes;
 
         std::vector<void*> m_objectAlloc;
 
