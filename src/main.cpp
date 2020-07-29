@@ -43,21 +43,18 @@ void makeAdder(Rocha::Machine* machine)
 
 void setA(Rocha::Machine* machine)
 {
-    std::printf("SET A\n");
     Adder* adder = (Adder*)machine->getObject();
     adder->a = machine->getNumber();
 }
 
 void setB(Rocha::Machine* machine)
 {
-    std::printf("SET B\n");
     Adder* adder = (Adder*)machine->getObject();
     adder->b = machine->getNumber();
 }
 
 void add(Rocha::Machine* machine)
 {
-    std::printf("ADD\n");
     Adder* adder = (Adder*)machine->getObject();
     machine->pushNumber(adder->a + adder->b);
 }

@@ -22,6 +22,13 @@ namespace Rocha {
         addFunction("print", Rocha::print);
     }
 
+    Machine::~Machine()
+    {
+        for (auto& object : m_objectAlloc) {
+            std::free(object);
+        }
+    }
+
     bool Machine::loadScript(const char* fileName)
     {
         Assembler asmler(*this, m_bytecode, m_jumps, m_calls);
@@ -174,7 +181,6 @@ namespace Rocha {
     {
         addFunction(name, onMake);
         m_constructors.emplace(name, m_calls.size() - 1);
-        std::cout << "Added constructor to location " << m_calls.size() - 1 << std::endl;
         std::unordered_map<std::string, size_t> methodMap;
         for (auto& method : methods) {
             int index = m_calls.size();

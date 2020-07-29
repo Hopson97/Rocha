@@ -157,8 +157,6 @@ namespace Rocha {
                 // The bytecode of make does not need to know the object id being made
                 m_objects.emplace(tokens[2], m_objects.size());
                 m_objectTypes.emplace(m_objects.size() - 1, tokens[1]);
-                std::cout << "Added make " << tokens[1] << " " << m_bytes.back()
-                          << std::endl;
                 return true;
             }
             else {

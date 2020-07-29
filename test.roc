@@ -1,26 +1,16 @@
 func:
     push 4
-    push 3
+    push 5
     ret
 test:
-    make Adder a
-    push 6
-    call a setA
-    push 5
-    call a setB
-    call a add
-    call print
+    make Adder some_object
+    push 50
+    call some_object setA
     call func
     call add
     call print
-    push 6
-    push 6
-    push 6
-    call add
-    call add
-    call print
-    push 2
-    push 3
-    call multiplyTest
+    push 100
+    call some_object setB
+    call some_object add
     call print
     ret
