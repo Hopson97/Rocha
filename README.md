@@ -78,7 +78,7 @@ All functions must take in a Rocha::Machine* as a parameter and return void.
 
 It is then possible to consume the stack and do operations.
 
-```
+```cpp
     void myAdder(Machine* machine)
     {
         float a = machine->getNumber();
@@ -110,7 +110,7 @@ main:
     print
 ```
 
-### Adding types
+### Adding User-Defined types
 
 It is possible to add user-defined types and operations to Rocha.
 
