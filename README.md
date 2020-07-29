@@ -184,20 +184,6 @@ main:
 
 ## Building and Running
 
-### Libraries
-
-SFML is required for the sandbox example application.
-
-These can be installed from your project manager. For example, on Debian/ Ubuntu:
-
-```sh
-sudo apt install libsfml-dev
-```
-
-If this is not possible (eg windows), you can install these manually from their respective websites:
-
-https://www.sfml-dev.org/download.php
-
 ### Linux
 
 To build, at the root of the project:
