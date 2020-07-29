@@ -31,10 +31,10 @@ main:
     make Adder my_adder_object  ;   Creates an "Adder" object, called "my_adder_object"
     push 10                     ;   Push 4 onto the stack
     call my_adder_object setA   ;   Calls Adder::setA using 10
-    push 6                      ;   Push 5 onto the stack
+    push 6                      ;   Push 6 onto the stack
     call my_adder_object setA   ;   Calls Adder::setA using 6
     call my_adder_object add    ;   Call Adder::add, pushing 10 + 6 onto the stack
-    call print                  ;   Call global print function
+    call print                  ;   Call global print function, printing 11
 ```
 
 Jump-Labels can also be defined:
