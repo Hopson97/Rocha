@@ -54,6 +54,13 @@ namespace Rocha {
         std::string line;
         while (std::getline(infile, line)) {
             trim(line);
+            if (line.find(';') != std::string::npos)
+                line = line.substr(0, line.find(';'));
+
+            if(line.empty()) {
+                continue;
+            }
+
             std::istringstream iss(line);
             std::vector<std::string> tokens(std::istream_iterator<std::string>{iss},
                                             std::istream_iterator<std::string>());
