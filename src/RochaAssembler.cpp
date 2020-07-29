@@ -24,11 +24,11 @@ const std::string push = "push";
 const std::string pop = "pop";
 const std::string call = "call";
 const std::string ret = "ret";
+const std::string make = "make";
 
 const std::unordered_map<std::string, Rocha::Instruction> toInstruction = {
-    {push, Rocha::Instruction::Push},
-    {pop, Rocha::Instruction::Push},
-    {call, Rocha::Instruction::Call},
+    {push, Rocha::Instruction::Push},  {pop, Rocha::Instruction::Push},
+    {call, Rocha::Instruction::Call},  {make, Rocha::Instruction::Make},
     {ret, Rocha::Instruction::Return},
 };
 
@@ -59,26 +59,52 @@ namespace Rocha {
             }
             else if (ins == call) {
                 bool found = false;
-                for (uint16_t i = 0; i < m_calls.size(); i++) {
-                    if (m_calls[i].first == tokens[1]) {
-                        addInstruction(ins);
-                        m_bytecode.push_back(static_cast<uint16_t>(Instruction::Call));
-                        m_bytecode.push_back(i);
-                        found = true;
+                if (tokens.size() == 2) {
+                    for (uint16_t i = 0; i < m_calls.size(); i++) {
+                        if (m_calls[i].first == tokens[1]) {
+                            addInstruction(ins);
+                            m_bytecode.push_back(
+                                static_cast<uint16_t>(Instruction::Call));
+                            m_bytecode.push_back(i);
+                            found = true;
+                        }
+                    }
+                    if (!found) {
+                        auto itr = m_jumps.find(tokens[1]);
+                        if (itr != m_jumps.end()) {
+                            addInstruction(ins);
+                            m_bytecode.push_back(
+                                static_cast<uint16_t>(Instruction::Jump));
+                            m_bytecode.push_back(itr->second);
+                            found = true;
+                        }
                     }
                 }
-                if (!found) {
-                    auto itr = m_jumps.find(tokens[1]);
-                    if (itr != m_jumps.end()) {
-                        addInstruction(ins);
-                        m_bytecode.push_back(static_cast<uint16_t>(Instruction::Jump));
-                        m_bytecode.push_back(itr->second);
-                        found = true;
-                    }
+                else {
                 }
                 if (!found) {
                     std::printf("Unknown call to '%s' where '%s'", tokens[1].c_str(),
                                 line.c_str());
+                    return false;
+                }
+            }
+            else if (ins == make) {
+                auto itr = m_constructors.find(tokens[1]);
+                if (itr != m_constructors.end()) {
+                    addInstruction(ins);
+                    m_bytecode.push_back(itr->second);
+                    auto object = m_objects.find(tokens[2]);
+                    if (object == m_objects.end()) {
+                        m_objects.emplace(tokens[2], m_objects.size());
+                        m_bytecode.push_back(m_objects.size() - 1);
+                    }
+                    else {
+                        std::printf("Object with name %s already exists", tokens[2].c_str());
+                        return false;
+                    }
+                }
+                else {
+                    std::printf("Unkown type %s", tokens[1].c_str());
                     return false;
                 }
             }

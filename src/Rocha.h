@@ -14,7 +14,19 @@ namespace Rocha {
         Pop = 1,
         Call = 2,
         Jump = 3,
-        Return = 4,
+        Method = 4,
+        Make = 5,
+        Return = 6,
+    };
+
+    enum class Type { Object, Number };
+
+    struct StackObject {
+        Type type;
+        union Data {
+            float number;
+            void* object;
+        } data;
     };
 
     class Machine {
@@ -23,14 +35,16 @@ namespace Rocha {
         bool loadScript(const char* fileName);
 
         void pushNumber(float value);
-        void pushString(const char* str);
+        void pushObject(void* object);
 
         float getNumber();
-        const char* getString();
+        void* getObject();
 
         void addFunction(const std::string& name, RochaFunction f);
 
         void runFunction(const std::string& name);
+
+        void newType(const std::string& name, RochaFunction onMake);
 
       private:
         void run();
@@ -41,17 +55,26 @@ namespace Rocha {
         // Maps labels to the byte code location of Rocha-defined functions
         std::unordered_map<std::string, size_t> m_jumps;
 
-        // Maps strings to Cpp-defined functions 
+        // Maps strings to Cpp-defined functions
         // Accessed is via index
         std::vector<std::pair<std::string, RochaFunction>> m_calls;
 
+        // Maps types to constructor calls, and types to functions
+        std::unordered_map<std::string, size_t> m_constructors;
+        std::unordered_map<std::string, std::unordered_map<std::string, size_t>>
+            m_objectFunctions;
+
+        // Maps variables to an ID
+        std::unordered_map<std::string, uint16_t> m_objects;
+        std::vector<void*> m_objectAlloc;
+
         // The Rocha stack
-        std::stack<std::any> m_stack;
+        std::stack<StackObject> m_stack;
 
         // Call stack for "returning" to a previous function
         std::stack<size_t> m_callStack;
 
-        // Pointer to the currently operated index in m_bytecode 
+        // Pointer to the currently operated index in m_bytecode
         size_t m_instructionPtr = 0;
     };
 } // namespace Rocha

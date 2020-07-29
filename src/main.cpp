@@ -33,7 +33,7 @@ int main()
 {
     Rocha::Machine rocha;
     // Add a function
-    rocha.addFunction("multiplyTest", [](Rocha::Machine* machine){
+    rocha.addFunction("multiplyTest", [](Rocha::Machine* machine) {
         float a = machine->getNumber();
         float b = machine->getNumber();
         machine->pushNumber(a * b);

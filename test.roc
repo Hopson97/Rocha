@@ -3,6 +3,7 @@ func:
     push 3
     ret
 test:
+    make Vector2 a
     call func
     call add
     call print

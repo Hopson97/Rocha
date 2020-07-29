@@ -11,26 +11,42 @@ namespace Rocha {
 
     void Machine::pushNumber(float value)
     {
-        m_stack.push(value);
+        StackObject stackObject;
+        stackObject.type = Type::Number;
+        stackObject.data.number = value;
+        m_stack.push(stackObject);
     }
 
-    void Machine::pushString(const char* str)
+    void Machine::pushObject(void* object)
     {
-        m_stack.push(str);
+        StackObject stackObject;
+        stackObject.type = Type::Object;
+        stackObject.data.object = object;
+        m_stack.push(stackObject);
     }
 
     float Machine::getNumber()
     {
-        auto value = std::any_cast<float>(m_stack.top());
-        m_stack.pop();
-        return value;
+        if (m_stack.top().type == Type::Number) {
+            float f = m_stack.top().data.number;
+            m_stack.pop();
+            return f;
+        }
+        else {
+            return 0.0f;
+        }
     }
 
-    const char* Machine::getString()
+    void* Machine::getObject()
     {
-        auto value = std::any_cast<const char*>(m_stack.top());
-        m_stack.pop();
-        return value;
+        if (m_stack.top().type == Type::Object) {
+            void* ptr = m_stack.top().data.object;
+            m_stack.pop();
+            return ptr;
+        }
+        else {
+            return nullptr;
+        }
     }
 
     void Machine::run()
@@ -38,7 +54,7 @@ namespace Rocha {
         while (true) {
             switch ((Instruction)m_bytecode[m_instructionPtr++]) {
                 case Instruction::Push:
-                    m_stack.emplace((float)m_bytecode[m_instructionPtr++]);
+                    pushNumber((float)m_bytecode[m_instructionPtr++]);
                     break;
 
                 case Instruction::Pop:
@@ -87,4 +103,11 @@ namespace Rocha {
     {
         m_calls.push_back(std::make_pair(name, f));
     }
+
+    void Machine::newType(const std::string& name, RochaFunction onMake)
+    {
+        addFunction(name, onMake);
+        m_constructors.emplace(name, m_calls.size() - 1);
+    }
+
 } // namespace Rocha
