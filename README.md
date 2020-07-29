@@ -54,6 +54,19 @@ This will output
 ```
 
 
+## Bytecode
+
+Table of bytes codes and operands etc
+
+| Name | Opcode | Operands | Code              | What Does It Do                                                                                     |
+|------|--------|----------|-------------------|-----------------------------------------------------------------------------------------------------|
+| Push | 0      | n        | push 5            | Pushes "n" onto the stack                                                                           |
+| Pop  | 1      |          | pop               | Pops a value from the stack                                                                         |
+| Call | 2      | 2 I      | call func         | Calls a C++ Function with ID I                                                                      |
+| Call | 2      | 3 R      | call func         | Calls a Rocha function at location R (Sets ip to R)                                                 |
+| Call | 2      | 4 V I    | call              | Call a C++ function that is a method, with object ID V with C++ function ID I                       |
+| Make | 5      | I        | make type varname | Creates an object of type "type", creating variable varname, calling C++ function I to construct it |
+
 
 ## Building and Running
 

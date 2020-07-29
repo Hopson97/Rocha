@@ -29,6 +29,39 @@ class Keyboard {
     std::array<bool, sf::Keyboard::KeyCount> m_keys{false};
 };
 
+struct Adder {
+    int a;
+    int b;
+};
+
+void makeAdder(Rocha::Machine* machine)
+{
+    Adder* adder = (Adder*)machine->makeObject(sizeof(Adder));
+    adder->a = 0;
+    adder->b = 0;
+}
+
+void setA(Rocha::Machine* machine)
+{
+    std::printf("SET A\n");
+    Adder* adder = (Adder*)machine->getObject();
+    adder->a = machine->getNumber();
+}
+
+void setB(Rocha::Machine* machine)
+{
+    std::printf("SET B\n");
+    Adder* adder = (Adder*)machine->getObject();
+    adder->b = machine->getNumber();
+}
+
+void add(Rocha::Machine* machine)
+{
+    std::printf("ADD\n");
+    Adder* adder = (Adder*)machine->getObject();
+    machine->pushNumber(adder->a + adder->b);
+}
+
 int main()
 {
     Rocha::Machine rocha;
@@ -38,8 +71,17 @@ int main()
         float b = machine->getNumber();
         machine->pushNumber(a * b);
     });
-    rocha.loadScript("test.roc");
-    rocha.runFunction("test");
+
+    rocha.newType("Adder", makeAdder,
+                  {
+                      {"setA", setA},
+                      {"setB", setB},
+                      {"add", add},
+                  });
+
+    if (rocha.loadScript("test.roc")) {
+        rocha.runFunction("test");
+    }
 }
 /*
 int main()

@@ -81,6 +81,36 @@ namespace Rocha {
                     }
                 }
                 else {
+                    // Method call lol
+                    auto& var = tokens[1];
+                    auto& func = tokens[1];
+
+                    // Find the variable
+                    auto itr = m_objects.find(tokens[1]);
+                    if (itr != m_objects.end()) {
+                        auto type = m_objectTypes[itr->second];
+
+                        // Find the function
+                        auto func = m_objectFunctions[type].find(tokens[2]);
+                        if (func != m_objectFunctions[type].end()) {
+                            // Add the method call
+                            addInstruction(ins);
+                            m_bytecode.push_back(
+                                static_cast<uint16_t>(Instruction::Method));
+                            m_bytecode.push_back(itr->second);
+                            m_bytecode.push_back(func->second);
+                            found = true;
+                        }
+                        else {
+                            std::printf("Type %s does not have function %s", type.c_str(),
+                                        tokens[2].c_str());
+                        }
+                    }
+                    else {
+                        std::printf("Varname %s does not exist where %s",
+                                    tokens[1].c_str(), line.c_str());
+                        return false;
+                    }
                 }
                 if (!found) {
                     std::printf("Unknown call to '%s' where '%s'", tokens[1].c_str(),
@@ -96,10 +126,11 @@ namespace Rocha {
                     auto object = m_objects.find(tokens[2]);
                     if (object == m_objects.end()) {
                         m_objects.emplace(tokens[2], m_objects.size());
-                        m_bytecode.push_back(m_objects.size() - 1);
+                        m_objectTypes.emplace(m_objects.size() - 1, tokens[1]);
                     }
                     else {
-                        std::printf("Object with name %s already exists", tokens[2].c_str());
+                        std::printf("Object with name %s already exists",
+                                    tokens[2].c_str());
                         return false;
                     }
                 }

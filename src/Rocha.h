@@ -44,7 +44,10 @@ namespace Rocha {
 
         void runFunction(const std::string& name);
 
-        void newType(const std::string& name, RochaFunction onMake);
+        void newType(const std::string& name, RochaFunction onMake,
+                     const std::vector<std::pair<std::string, RochaFunction>>& methods);
+
+        void* makeObject(size_t size);
 
       private:
         void run();
@@ -66,6 +69,10 @@ namespace Rocha {
 
         // Maps variables to an ID
         std::unordered_map<std::string, uint16_t> m_objects;
+
+        // Maps variables to a type names
+        std::unordered_map<uint16_t, std::string> m_objectTypes;
+
         std::vector<void*> m_objectAlloc;
 
         // The Rocha stack

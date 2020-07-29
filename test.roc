@@ -3,7 +3,13 @@ func:
     push 3
     ret
 test:
-    make Vector2 a
+    make Adder a
+    push 6
+    call a setA
+    push 5
+    call a setB
+    call a add
+    call print
     call func
     call add
     call print
