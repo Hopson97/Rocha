@@ -91,6 +91,7 @@ namespace Rocha {
                         if (method > -1) {
                             addInstruction(ins);
                             addInstruction(Instruction::Method);
+                            m_bytes.push_back(itr->second);
                             m_bytes.push_back(method);
                             found = true;
                         }
