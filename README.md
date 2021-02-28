@@ -1,8 +1,6 @@
 # Rocha
 
-Aka Off-Brand Lua, an embeddable """scripting""" language.
-
-Made for a bit off fun.
+Inspired by Lua and made for fun, Rocha is an embeddable scripting language with assembly-like syntax.
 
 ## The Language
 
