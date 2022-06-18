@@ -59,7 +59,7 @@ The basics:
 ```cpp
 int main() 
 {
-    // Createa a Rocha machine
+    // Creates a Rocha machine
     Rocha::Machine rocha;
 
     // Load up the script
@@ -130,7 +130,7 @@ void Adder_makeAdder(Rocha::Machine* machine)
 
 void Adder_setA(Rocha::Machine* machine)
 {
-    // On calling a function, the correct object is pushed onto the stack, which can be recieved doing Rocha::Machine::getObject()
+    // On calling a function, the correct object is pushed onto the stack, which can be received doing Rocha::Machine::getObject()
     Adder* adder = (Adder*)machine->getObject();
     adder->a = machine->getNumber();
 }
@@ -210,3 +210,4 @@ sh scripts/deploy.sh
 ```
 
 wot++ or something idk 
+
